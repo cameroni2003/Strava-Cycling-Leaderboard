@@ -20,8 +20,38 @@
   <![endif]-->
 </head>
 <body>
-
-  <script type="text/x-handlebars" >
+<script type="text/x-handlebars" data-template-name="application">
+	{{view App.NavbarView controllerBinding="controller.controllers.navbarController"}}
+  {{outlet greeting}}
+  <p {{bindAttr class="isSlogan"}} >Ember is: {{slogan}}</p>
+  {{outlet body}}
+  {{outlet footer}}
+</script>
+<script type="text/x-handlebars" data-template-name="cars">
+  <hr/>
+  <h1>Cars</h1>
+  <p>Here in my car / I feel safest of all</p>
+</script>
+<script type="text/x-handlebars" data-template-name="shoes">
+  <hr/>
+  <h1>Shoes</h1>
+  <p><a href="http://youtu.be/v_Yx0X-eHn8">N&uuml; Shooz?</p>
+</script>
+<script type="text/x-handlebars" data-template-name="salutation">
+  <h1>{{greeting}}</h1>
+</script>
+<script type="text/x-handlebars" data-template-name="traversal">
+  <hr/>
+  <p><a {{action goToCars href=true}}>Go To Cars</a>
+  <p><a {{action goToShoes href=true}}>Go To Shoes</a>
+  {{outlet}}
+</script>
+<script type="text/x-handlebars" data-template-name="topNav">
+<ul>
+<li><a {{action goToRiders href=true}}>Go To Riders</a></li>
+</ul>
+</script>
+  <!--<script type="text/x-handlebars" >
     
 		{{#each App.ridesController.content}}
 			{{#view App.RidesList contentBinding="this"}}
@@ -35,7 +65,7 @@
 			{{/view}}
 		{{/each}}
   
-  </script>
+  </script>-->
   <script type="text/x-handlebars" data-template-name="rides-list"><h1>{{name}}</h1></script>
   <script type="text/x-handlebars" data-template-name="detailed-info"><h1>asdf</h1></script>
 
