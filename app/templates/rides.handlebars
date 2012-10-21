@@ -1,0 +1,8 @@
+<h1>rides</h1>
+{{#each App.ridesController.content}}
+<ul>
+{{#view App.RidesListView contentBinding="this" }}
+<li>{{name}}</li>
+{{/view}}
+</ul>
+{{/each}}
