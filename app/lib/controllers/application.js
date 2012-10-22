@@ -11,5 +11,5 @@ App.HomeBodyView = Em.View.extend({
 });
 
 App.ridesController = Ember.ArrayController.create({
-	content: App.store.findQuery(App.Ride)
+	content: App.store.findAll(App.Ride)
 });

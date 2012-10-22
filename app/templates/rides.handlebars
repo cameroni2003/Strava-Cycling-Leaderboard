@@ -2,7 +2,7 @@
 {{#each App.ridesController.content}}
 <ul>
 {{#view App.RidesListView contentBinding="this" }}
-<li>{{name}}</li>
+<li>{{name}} - Average Speed: {{averageSpeed}}</li>
 {{/view}}
 </ul>
 {{/each}}
