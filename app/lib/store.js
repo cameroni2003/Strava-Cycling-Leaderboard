@@ -1,5 +1,10 @@
 require('ember-skeleton/core');
 
+function roundNumber(num, dec) {
+	var result = Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
+	return result;
+}
+
 DS.Adapter.map('App.Ride', {
 	rideData: { key: 'id' }
 });
@@ -16,9 +21,7 @@ App.adapter = DS.Adapter.create({
 			data: { format: 'json', q: queryUrl },
 			dataType: 'jsonp',
 			success: function (data) {
-				debugger;
 				store.load(type, id, data.query.results.ride);
-
 			}
 		});
 	},
@@ -96,7 +99,14 @@ App.RideDetail = DS.Model.extend({
 App.Ride = DS.Model.extend({
 	rideData: DS.belongsTo('App.RideDetail'),
 	name: DS.attr('string'),
-	averageSpeed: DS.attr('number')
+	averageSpeed: DS.attr('number'),
+	distance: DS.attr('number'),
+	averageSpeedMph: function () {
+		return roundNumber(parseFloat(this.get('averageSpeed')) * 0.000621371192237 * 60 * 60, 2);	
+	} .property('averageSpeed'),
+	distanceInMiles: function () {
+		return roundNumber(parseFloat(this.get('distance')) * 0.000621371192237, 2);
+	} .property('distance')
 });
 App.Ride.reopenClass({
 	url: 'rides/%@'

@@ -2,7 +2,13 @@
 {{#each App.ridesController.content}}
 <ul>
 {{#view App.RidesListView contentBinding="this" }}
-<li>{{name}} - Average Speed: {{averageSpeed}}</li>
+<li>{{name}}</li>
+
+	<ul>
+		<li>Average Speed: {{averageSpeedMph}} mph</li>
+		<li>Distance: {{distanceInMiles}} miles</li>
+	</ul>
+
 {{/view}}
 </ul>
 {{/each}}

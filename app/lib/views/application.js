@@ -10,7 +10,7 @@ App.FunView = Em.View.extend({
 
 App.RidesListView = Em.View.extend({
 	click: function(el) {
-		debugger;
+		console.log('clicked!');
 	}
 })
 
