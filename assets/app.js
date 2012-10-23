@@ -19,7 +19,7 @@ return Ember.Handlebars.compile("<h2>Welcome to my app</h2>\n<p>lorem ipsum dola
 
 loader.register('ember-skeleton/~templates/rides', function(require) {
 
-return Ember.Handlebars.compile("<h1>rides</h1>\n<h2>Club: {{App.clubController.club.name}}</h2>\n<h2>Members</h2>\n<ul>\n\t{{#each App.clubController.club.members}}\n\t\t<li>{{name}}</li>\n\t{{/each}}\n</ul>\n\n\n\n<ul>\n{{#view App.RidesListView contentBinding=\"this\" }}\n<li>{{name}}</li>\n\n\t<ul>\n\t\t<li>Average Speed: {{averageSpeedMph}} mph</li>\n\t\t<li>Distance: {{distanceInMiles}} miles</li>\n\t</ul>\n\n{{/view}}\n</ul>\n\n");
+return Ember.Handlebars.compile("<h1>rides</h1>\n<h2>Club: {{App.clubController.club.name}}</h2>\n<h2>Members</h2>\n<ul>\n\t{{#each App.athletesController}}\n\t\t<li>{{name}}</li>\n\t{{/each}}\n</ul>\n\n\n\n<ul>\n\t{{#each App.ridesController}}\n{{#view App.RidesListView contentBinding=\"this\" }}\n<li>{{name}}</li>\n\n\t<ul>\n\t\t<li>Average Speed: {{averageSpeedMph}} mph</li>\n\t\t<li>Distance: {{distanceInMiles}} miles</li>\n\t</ul>\n\n{{/view}}\n{{/each}}\n</ul>\n\n");
 
 });
 
@@ -37844,6 +37844,10 @@ App.ridesController = Ember.ArrayController.create({
 App.clubController = Em.ObjectController.create({
 	club: App.store.find(App.Club, 3957)
 });
+
+App.athletesController = Em.ArrayController.create({
+	contentBinding: App.clubController.get("club.members")
+});
 });
 
 loader.register('ember-skeleton/core', function(require) {
@@ -37969,10 +37973,6 @@ App.adapter = DS.Adapter.create({
 					//data.query.results.json.members = ar;
 					store.load(type, id, data.query.results.json);
 				}
-				else if (type == 'App.Athlete') {
-				debugger;
-					//store.load(type, id, type, id, data.query.results.json.rides);
-				}
 				else
 					store.load(type, id, data.query.results.ride);
 			}
@@ -37988,10 +37988,9 @@ App.adapter = DS.Adapter.create({
 			data: { format: 'json', q: 'select * from json where url="http://www.strava.com/api/v1/rides?clubId=3957"' },
 			dataType: 'jsonp',
 			success: function (data) {
-
+				//debugger;
 				store.loadMany(type, data.query.results.json.rides);
-				var firstRide = [0];
-
+				
 				$.each(data.query.results.json.rides, function (i, el) {
 					var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/rides/%@"'.fmt(el.id);
 

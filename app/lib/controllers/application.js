@@ -18,3 +18,7 @@ App.ridesController = Ember.ArrayController.create({
 App.clubController = Em.ObjectController.create({
 	club: App.store.find(App.Club, 3957)
 });
+
+App.athletesController = Em.ArrayController.create({
+	contentBinding: App.clubController.get("club.members")
+});

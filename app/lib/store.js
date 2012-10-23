@@ -33,16 +33,38 @@ App.adapter = DS.Adapter.create({
 					//data.query.results.json.members = ar;
 					store.load(type, id, data.query.results.json);
 				}
-				else if (type == 'App.Athlete') {
-				debugger;
-					//store.load(type, id, type, id, data.query.results.json.rides);
-				}
 				else
 					store.load(type, id, data.query.results.ride);
 			}
 		});
 	},
 	findAll: function (store, type, ids) {
+		if (type == 'App.Athlete') {
+			var url = type.url;
+			url = url.fmt(id)
+			var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
+
+			var self = this;
+			$.ajax({
+				url: 'http://query.yahooapis.com/v1/public/yql',
+				data: { format: 'json', q: queryUrl },
+				dataType: 'jsonp',
+				success: function (data) {
+					//debugger;
+					
+						var ar = new Array();
+						$.each(data.query.results.json.members, function (i, el) {
+							ar.push(el.id);
+						});
+
+						//debugger;
+						//data.query.results.json.members = ar;
+						store.load(type, id, data.query.results.json);
+					
+				}
+			});
+			return;
+		}
 		var url = type.url;
 		url = url.fmt(ids)
 
@@ -52,9 +74,8 @@ App.adapter = DS.Adapter.create({
 			data: { format: 'json', q: 'select * from json where url="http://www.strava.com/api/v1/rides?clubId=3957"' },
 			dataType: 'jsonp',
 			success: function (data) {
-
+				//debugger;
 				store.loadMany(type, data.query.results.json.rides);
-				var firstRide = [0];
 
 				$.each(data.query.results.json.rides, function (i, el) {
 					var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/rides/%@"'.fmt(el.id);
