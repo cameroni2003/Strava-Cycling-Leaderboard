@@ -1,5 +1,14 @@
 <h1>rides</h1>
-{{#each App.ridesController.content}}
+<h2>Club: {{App.clubController.club.name}}</h2>
+<h2>Members</h2>
+<ul>
+	{{#each App.clubController.club.members}}
+		<li>{{name}}</li>
+	{{/each}}
+</ul>
+
+
+
 <ul>
 {{#view App.RidesListView contentBinding="this" }}
 <li>{{name}}</li>
@@ -11,4 +20,4 @@
 
 {{/view}}
 </ul>
-{{/each}}
+
