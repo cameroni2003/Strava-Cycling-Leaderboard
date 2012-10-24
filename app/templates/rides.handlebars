@@ -1,25 +1,37 @@
-<h1>rides</h1>
+<p>Club Id: {{view Ember.TextField valueBinding="App.clubController.clubId"}}</p>
+{{#if App.clubController.isLoaded }}
+{{#if App.clubController.isError }}
+<h2>Our shit broke :[</h2>
+{{else}}
 <h2>Club: {{App.clubController.club.name}}</h2>
+
+
 <h2>Members</h2>
 <ul>
 	{{#each App.athletesController}}
-		<li>{{name}}</li>
+	<li>{{name}}</li>
+	<!--<li>Total Miles: {{blah}}</li>-->
 	{{/each}}
 </ul>
-
+<p></p>
 
 
 <ul>
 	{{#each App.ridesController}}
-{{#view App.RidesListView contentBinding="this" }}
-<li>{{name}}</li>
+	{{#view App.RidesListView contentBinding="this" }}
+	<li>{{name}}</li>
 
 	<ul>
 		<li>Average Speed: {{averageSpeedMph}} mph</li>
 		<li>Distance: {{distanceInMiles}} miles</li>
 	</ul>
 
-{{/view}}
-{{/each}}
+	{{/view}}
+	{{/each}}
 </ul>
+{{/if}}
+{{else}}
+<img src="/ajax-loader.gif"/>
+{{/if}}
+
 

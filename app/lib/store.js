@@ -11,19 +11,19 @@ DS.Adapter.map('App.Club', {
 
 App.adapter = DS.Adapter.create({
 	find: function (store, type, id) {
-		//debugger;
-		var url = type.url;
-		url = url.fmt(id)
-		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
+		debugger;
+		if (type == 'App.Club') {
+			var url = type.url;
+			url = url.fmt(id)
+			var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
 
-		var self = this;
-		$.ajax({
-			url: 'http://query.yahooapis.com/v1/public/yql',
-			data: { format: 'json', q: queryUrl },
-			dataType: 'jsonp',
-			success: function (data) {
-				//debugger;
-				if (type == 'App.Club') {
+			var self = this;
+			$.ajax({
+				url: 'http://query.yahooapis.com/v1/public/yql',
+				data: { format: 'json', q: queryUrl },
+				dataType: 'jsonp',
+				success: function (data) {
+
 					var ar = new Array();
 					$.each(data.query.results.json.members, function (i, el) {
 						ar.push(el.id);
@@ -32,13 +32,20 @@ App.adapter = DS.Adapter.create({
 					//debugger;
 					//data.query.results.json.members = ar;
 					store.load(type, id, data.query.results.json);
+					for (var member in data.query.results.json.members) {
+						store.load("App.Athlete", member.id, member);
+					}
+
 				}
-				else
-					store.load(type, id, data.query.results.ride);
-			}
-		});
+			});
+		}
+		else if (type == 'App.Athlete') {
+
+		}
+
 	},
 	findAll: function (store, type, ids) {
+		debugger;
 		if (type == 'App.Athlete') {
 			var url = type.url;
 			url = url.fmt(id)
@@ -51,16 +58,16 @@ App.adapter = DS.Adapter.create({
 				dataType: 'jsonp',
 				success: function (data) {
 					//debugger;
-					
-						var ar = new Array();
-						$.each(data.query.results.json.members, function (i, el) {
-							ar.push(el.id);
-						});
 
-						//debugger;
-						//data.query.results.json.members = ar;
-						store.load(type, id, data.query.results.json);
-					
+					var ar = new Array();
+					$.each(data.query.results.json.members, function (i, el) {
+						ar.push(el.id);
+					});
+
+					//debugger;
+					//data.query.results.json.members = ar;
+					store.load(type, id, data.query.results.json);
+
 				}
 			});
 			return;
@@ -112,6 +119,15 @@ App.adapter.registerTransform('club', {
 
 App.adapter.registerTransform('array', {
 	fromJSON: function (serialized) {
+
+		if (Ember.isArray(serialized)) {
+			var ar = new Array();
+			for (var i in serialized) {
+				ar.push(App.Athlete.createRecord(serialized[i]));
+			}
+			App.Athlete.commit();
+			return ar;
+		}
 		return serialized;
 	},
 	toJSON: function (deserialized) {
@@ -149,13 +165,15 @@ App.Ride.reopenClass({
 });
 
 App.Athlete = DS.Model.extend({
-	name: DS.attr('string')
-	//rides: DS.hasMany('App.Ride', { embedded: true })
+	name: DS.attr('string'),
+	blah: function () {
+		return 'blah';
+	}
 });
 
 App.Club = DS.Model.extend({
 	name: DS.attr('club'),
-	members: DS.attr('array')// DS.hasMany(App.Athlete, { embedded: true })
+	members: DS.attr('array')
 });
 App.Club.reopenClass({
 	url: 'clubs/%@/members'

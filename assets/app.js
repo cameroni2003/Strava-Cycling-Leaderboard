@@ -19,7 +19,7 @@ return Ember.Handlebars.compile("<h2>Welcome to my app</h2>\n<p>lorem ipsum dola
 
 loader.register('ember-skeleton/~templates/rides', function(require) {
 
-return Ember.Handlebars.compile("<h1>rides</h1>\n<h2>Club: {{App.clubController.club.name}}</h2>\n<h2>Members</h2>\n<ul>\n\t{{#each App.athletesController}}\n\t\t<li>{{name}}</li>\n\t{{/each}}\n</ul>\n\n\n\n<ul>\n\t{{#each App.ridesController}}\n{{#view App.RidesListView contentBinding=\"this\" }}\n<li>{{name}}</li>\n\n\t<ul>\n\t\t<li>Average Speed: {{averageSpeedMph}} mph</li>\n\t\t<li>Distance: {{distanceInMiles}} miles</li>\n\t</ul>\n\n{{/view}}\n{{/each}}\n</ul>\n\n");
+return Ember.Handlebars.compile("<p>Club Id: {{view Ember.TextField valueBinding=\"App.clubController.clubId\"}}</p>\n{{#if App.clubController.isLoaded }}\n{{#if App.clubController.isError }}\n<h2>Our shit broke :[</h2>\n{{else}}\n<h2>Club: {{App.clubController.club.name}}</h2>\n\n\n<h2>Members</h2>\n<ul>\n\t{{#each App.athletesController}}\n\t<li>{{name}}</li>\n\t<!--<li>Total Miles: {{blah}}</li>-->\n\t{{/each}}\n</ul>\n<p></p>\n\n\n<ul>\n\t{{#each App.ridesController}}\n\t{{#view App.RidesListView contentBinding=\"this\" }}\n\t<li>{{name}}</li>\n\n\t<ul>\n\t\t<li>Average Speed: {{averageSpeedMph}} mph</li>\n\t\t<li>Distance: {{distanceInMiles}} miles</li>\n\t</ul>\n\n\t{{/view}}\n\t{{/each}}\n</ul>\n{{/if}}\n{{else}}\n<img src=\"/ajax-loader.gif\"/>\n{{/if}}\n\n\n");
 
 });
 
@@ -37816,18 +37816,58 @@ require('ember-skeleton/controllers/application');
 
 });
 
-loader.register('ember-skeleton/controllers/RidesController', function(require) {
-require('ember-skeleton/controllers/application');
-
-
-
-});
-
 loader.register('ember-skeleton/controllers/application', function(require) {
 require('ember-skeleton/core');
 
 App.ApplicationController = Ember.Controller.extend();
 
+App.Ride = Em.Object.extend({});
+App.Athlete = Em.Object.extend({});
+
+App.Club = Em.Object.extend({
+	isLoaded: false,
+	isError: false,
+	init: function() {
+		this.loadData();
+	},
+	loadData: function(){
+		this.set('isLoaded', false);
+		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt('clubs/'+this.get('clubId')+'/members');
+		var self = this;
+		$.ajax({
+			url: 'http://query.yahooapis.com/v1/public/yql',
+			data: { format: 'json', q: queryUrl },
+			dataType: 'jsonp',
+			success: function (data) {
+
+				
+				console.log(data.query.results.json);
+				if(!Ember.none(data.query.results.json))
+				{
+					// the strava api will return members as a single object instead of an array
+					//	if there is only one member.
+					//
+					//	This is how we fix it.
+					data.query.results.json.members = Ember.makeArray(data.query.results.json.members);
+
+					App.currentClub.setProperties(data.query.results.json);
+					self.set('isError', false);
+				}
+				else
+					self.set('isError', true);
+
+				self.set('isLoaded', true);
+			}
+		});
+	}
+});
+App.Club.reopen({
+	clubChanged: Ember.observer(function() {
+		this.loadData();
+  }, 'clubId')
+});
+
+App.currentClub = App.Club.create({clubId: 3957});
 
 
 App.HomeController = Em.Controller.extend();
@@ -37837,16 +37877,17 @@ App.HomeBodyView = Em.View.extend({
 });
 
 App.ridesController = Ember.ArrayController.create({
-	content: App.store.findAll(App.Ride)
+	content: []
 });
 
 
 App.clubController = Em.ObjectController.create({
-	club: App.store.find(App.Club, 3957)
+	contentBinding: 'App.currentClub'
 });
 
 App.athletesController = Em.ArrayController.create({
-	contentBinding: App.clubController.get("club.members")
+	contentBinding: 'App.currentClub.members',
+
 });
 });
 
@@ -37951,19 +37992,19 @@ DS.Adapter.map('App.Club', {
 
 App.adapter = DS.Adapter.create({
 	find: function (store, type, id) {
-		//debugger;
-		var url = type.url;
-		url = url.fmt(id)
-		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
+		debugger;
+		if (type == 'App.Club') {
+			var url = type.url;
+			url = url.fmt(id)
+			var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
 
-		var self = this;
-		$.ajax({
-			url: 'http://query.yahooapis.com/v1/public/yql',
-			data: { format: 'json', q: queryUrl },
-			dataType: 'jsonp',
-			success: function (data) {
-				//debugger;
-				if (type == 'App.Club') {
+			var self = this;
+			$.ajax({
+				url: 'http://query.yahooapis.com/v1/public/yql',
+				data: { format: 'json', q: queryUrl },
+				dataType: 'jsonp',
+				success: function (data) {
+
 					var ar = new Array();
 					$.each(data.query.results.json.members, function (i, el) {
 						ar.push(el.id);
@@ -37972,13 +38013,46 @@ App.adapter = DS.Adapter.create({
 					//debugger;
 					//data.query.results.json.members = ar;
 					store.load(type, id, data.query.results.json);
+					for (var member in data.query.results.json.members) {
+						store.load("App.Athlete", member.id, member);
+					}
+
 				}
-				else
-					store.load(type, id, data.query.results.ride);
-			}
-		});
+			});
+		}
+		else if (type == 'App.Athlete') {
+
+		}
+
 	},
 	findAll: function (store, type, ids) {
+		debugger;
+		if (type == 'App.Athlete') {
+			var url = type.url;
+			url = url.fmt(id)
+			var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt(url);
+
+			var self = this;
+			$.ajax({
+				url: 'http://query.yahooapis.com/v1/public/yql',
+				data: { format: 'json', q: queryUrl },
+				dataType: 'jsonp',
+				success: function (data) {
+					//debugger;
+
+					var ar = new Array();
+					$.each(data.query.results.json.members, function (i, el) {
+						ar.push(el.id);
+					});
+
+					//debugger;
+					//data.query.results.json.members = ar;
+					store.load(type, id, data.query.results.json);
+
+				}
+			});
+			return;
+		}
 		var url = type.url;
 		url = url.fmt(ids)
 
@@ -37990,7 +38064,7 @@ App.adapter = DS.Adapter.create({
 			success: function (data) {
 				//debugger;
 				store.loadMany(type, data.query.results.json.rides);
-				
+
 				$.each(data.query.results.json.rides, function (i, el) {
 					var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/rides/%@"'.fmt(el.id);
 
@@ -38026,6 +38100,15 @@ App.adapter.registerTransform('club', {
 
 App.adapter.registerTransform('array', {
 	fromJSON: function (serialized) {
+
+		if (Ember.isArray(serialized)) {
+			var ar = new Array();
+			for (var i in serialized) {
+				ar.push(App.Athlete.createRecord(serialized[i]));
+			}
+			App.Athlete.commit();
+			return ar;
+		}
 		return serialized;
 	},
 	toJSON: function (deserialized) {
@@ -38063,13 +38146,15 @@ App.Ride.reopenClass({
 });
 
 App.Athlete = DS.Model.extend({
-	name: DS.attr('string')
-	//rides: DS.hasMany('App.Ride', { embedded: true })
+	name: DS.attr('string'),
+	blah: function () {
+		return 'blah';
+	}
 });
 
 App.Club = DS.Model.extend({
 	name: DS.attr('club'),
-	members: DS.attr('array')// DS.hasMany(App.Athlete, { embedded: true })
+	members: DS.attr('array')
 });
 App.Club.reopenClass({
 	url: 'clubs/%@/members'
