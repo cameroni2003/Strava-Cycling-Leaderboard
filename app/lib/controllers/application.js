@@ -48,14 +48,16 @@ App.Club.reopen({
   }, 'clubId')
 });
 
+App.Athlete = Em.Object.extend({
+	init: function() {
+	}
+});
+
 App.currentClub = App.Club.create({clubId: 3957});
 
 
 App.HomeController = Em.Controller.extend();
 
-App.HomeBodyView = Em.View.extend({
-	templateName: 'ember-skeleton/~templates/homeBody'
-});
 
 App.ridesController = Ember.ArrayController.create({
 	content: []
@@ -67,6 +69,5 @@ App.clubController = Em.ObjectController.create({
 });
 
 App.athletesController = Em.ArrayController.create({
-	contentBinding: 'App.currentClub.members',
-
+	contentBinding: 'App.currentClub.members'
 });

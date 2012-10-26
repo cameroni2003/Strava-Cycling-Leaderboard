@@ -45,7 +45,6 @@ App.adapter = DS.Adapter.create({
 
 	},
 	findAll: function (store, type, ids) {
-		debugger;
 		if (type == 'App.Athlete') {
 			var url = type.url;
 			url = url.fmt(id)

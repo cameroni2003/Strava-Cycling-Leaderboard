@@ -8,7 +8,6 @@ App.Router = Em.Router.extend({
 			route: '/',
 			connectOutlets: function (router, context) {
 				router.get('applicationController').connectOutlet('body', 'homeBody');
-				router.get('applicationController').connectOutlet('body', 'homeBody');
 			}
 		}),
 		rides: Em.Route.extend({
