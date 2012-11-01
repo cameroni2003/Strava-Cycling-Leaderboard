@@ -170,10 +170,10 @@ App.Athlete = DS.Model.extend({
 	}
 });
 
-App.Club = DS.Model.extend({
+/*App.Club = DS.Model.extend({
 	name: DS.attr('club'),
-	members: DS.attr('array')
+	members: DS.attr('array'),
 });
 App.Club.reopenClass({
 	url: 'clubs/%@/members'
-});
+});*/

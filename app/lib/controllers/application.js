@@ -8,21 +8,27 @@ App.Athlete = Em.Object.extend({});
 App.Club = Em.Object.extend({
 	isLoaded: false,
 	isError: false,
+	
 	init: function() {
 		this.loadData();
 	},
 	loadData: function(){
-		this.set('isLoaded', false);
-		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt('clubs/'+this.get('clubId')+'/members');
+		
+	}
+});
+App.Club.reopenClass({
+	club: null,
+	rides: [],
+	find: function(id) {
+		//this.setProperty('isLoaded', false);
+		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt('clubs/'+ id +'/members');
 		var self = this;
 		$.ajax({
 			url: 'http://query.yahooapis.com/v1/public/yql',
 			data: { format: 'json', q: queryUrl },
 			dataType: 'jsonp',
 			success: function (data) {
-
 				
-				console.log(data.query.results.json);
 				if(!Ember.none(data.query.results.json))
 				{
 					// the strava api will return members as a single object instead of an array
@@ -30,22 +36,21 @@ App.Club = Em.Object.extend({
 					//
 					//	This is how we fix it.
 					data.query.results.json.members = Ember.makeArray(data.query.results.json.members);
-
-					App.currentClub.setProperties(data.query.results.json);
-					self.set('isError', false);
+					Ember.setProperties(self.club, App.Club.create(data.query.results.json));
 				}
-				else
-					self.set('isError', true);
-
-				self.set('isLoaded', true);
 			}
 		});
+		this.club = App.Club.create({clubId: id});
+		return this.club;
+	},
+	getRides: function(clubId, endDate) {
+		
 	}
 });
 App.Club.reopen({
 	clubChanged: Ember.observer(function() {
 		this.loadData();
-  }, 'clubId')
+  	}, 'clubId')	
 });
 
 App.Athlete = Em.Object.extend({
@@ -63,9 +68,13 @@ App.ridesController = Ember.ArrayController.create({
 	content: []
 });
 
+App.ClubController = Em.ObjectController.extend({
+
+});
+
 
 App.clubController = Em.ObjectController.create({
-	contentBinding: 'App.currentClub'
+	content: App.currentClub
 });
 
 App.athletesController = Em.ArrayController.create({

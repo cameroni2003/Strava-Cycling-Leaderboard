@@ -1,7 +1,13 @@
 
 loader.register('ember-skeleton/~templates/application', function(require) {
 
-return Ember.Handlebars.compile("<nav role=\"navigation\" class=\"navbar navbar-fixed-top navbar-inverse\">\n  <div class=\"navbar-inner\">\n    <div class=\"container\">\n      <a class=\"brand\" href=\"#\">ember-skeleton</a>\n\t\t<a class=\"brand\" {{action goToFun href=true}}>Fun</a>\n\t\t<a class=\"brand\" {{action goToRides href=true}}>Rides</a>\n\t\t<span>Club Id: {{view Ember.TextField valueBinding=\"App.clubController.clubId\"}}</span>\n    </div>\n\n</nav>\n<div id=\"main\" role=\"main\" class=\"container\">\n  {{outlet body}}\n</div>\n");
+return Ember.Handlebars.compile("<nav role=\"navigation\" class=\"navbar navbar-fixed-top navbar-inverse\">\n  <div class=\"navbar-inner\">\n    <div class=\"container\">\n      <a class=\"brand\" href=\"#\">ember-skeleton</a>\n\t\t<!-- <a class=\"brand\" {{action goToFun href=true}}>Fun</a> -->\n\t\t<!-- <a class=\"brand\" {{action goToRides href=true}}>Rides</a> -->\n\t\t<a class=\"brand\" href=\"#/club/3957\">My Club</a>\n\t\t\n    </div>\n\n</nav>\n<div id=\"main\" role=\"main\" class=\"container\">\n  {{outlet body}}\n</div>\n");
+
+});
+
+loader.register('ember-skeleton/~templates/club', function(require) {
+
+return Ember.Handlebars.compile("<h2>Club: {{club.name}}</h2>\n\n\n<h2>Members</h2>\n<ul>\n\t{{#each members}}\n\t<li>{{name}}</li>\n\t<!--<li>Total Miles: {{blah}}</li>-->\n\t{{/each}}\n</ul>\n\n{{#view App.ShowMore contentBinding=\"this\"}}\nshow more\n{{/view}}\n\n<ul>\n\t{{#each rides}}\n\t<li>{{name}}</li>\n\t{{/each}}\n</ul>\n<!-- <ul>\n\t{{#each App.ridesController}}\n\t{{#view App.RidesListView contentBinding=\"this\" }}\n\t<li>{{name}}</li>\n\n\t<ul>\n\t\t<li>Average Speed: {{averageSpeedMph}} mph</li>\n\t\t<li>Distance: {{distanceInMiles}} miles</li>\n\t</ul>\n\n\t{{/view}}\n\t{{/each}}\n</ul> -->");
 
 });
 
@@ -39389,21 +39395,27 @@ App.Athlete = Em.Object.extend({});
 App.Club = Em.Object.extend({
 	isLoaded: false,
 	isError: false,
+	
 	init: function() {
 		this.loadData();
 	},
 	loadData: function(){
-		this.set('isLoaded', false);
-		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt('clubs/'+this.get('clubId')+'/members');
+		
+	}
+});
+App.Club.reopenClass({
+	club: null,
+	rides: [],
+	find: function(id) {
+		//this.setProperty('isLoaded', false);
+		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/%@"'.fmt('clubs/'+ id +'/members');
 		var self = this;
 		$.ajax({
 			url: 'http://query.yahooapis.com/v1/public/yql',
 			data: { format: 'json', q: queryUrl },
 			dataType: 'jsonp',
 			success: function (data) {
-
 				
-				console.log(data.query.results.json);
 				if(!Ember.none(data.query.results.json))
 				{
 					// the strava api will return members as a single object instead of an array
@@ -39411,22 +39423,21 @@ App.Club = Em.Object.extend({
 					//
 					//	This is how we fix it.
 					data.query.results.json.members = Ember.makeArray(data.query.results.json.members);
-
-					App.currentClub.setProperties(data.query.results.json);
-					self.set('isError', false);
+					Ember.setProperties(self.club, App.Club.create(data.query.results.json));
 				}
-				else
-					self.set('isError', true);
-
-				self.set('isLoaded', true);
 			}
 		});
+		this.club = App.Club.create({clubId: id});
+		return this.club;
+	},
+	getRides: function(clubId, endDate) {
+		
 	}
 });
 App.Club.reopen({
 	clubChanged: Ember.observer(function() {
 		this.loadData();
-  }, 'clubId')
+  	}, 'clubId')	
 });
 
 App.Athlete = Em.Object.extend({
@@ -39444,14 +39455,17 @@ App.ridesController = Ember.ArrayController.create({
 	content: []
 });
 
+App.ClubController = Em.ObjectController.extend({
+
+});
+
 
 App.clubController = Em.ObjectController.create({
-	contentBinding: 'App.currentClub'
+	content: App.currentClub
 });
 
 App.athletesController = Em.ArrayController.create({
-	contentBinding: 'App.currentClub.members',
-
+	contentBinding: 'App.currentClub.members'
 });
 });
 
@@ -39521,6 +39535,7 @@ App.Router = Em.Router.extend({
 	root: Em.Route.extend({
 		goToFun: Em.Route.transitionTo('fun'),
 		goToRides: Em.Route.transitionTo('rides'),
+		//goToMyClub: Em.Route.transitionTo('club', 3957),
 		index: Em.Route.extend({
 			route: '/',
 			connectOutlets: function (router, context) {
@@ -39537,6 +39552,17 @@ App.Router = Em.Router.extend({
 			route: '/fun',
 			connectOutlets: function (router, context) {
 				router.get('applicationController').connectOutlet('body','fun');
+			}
+		}),
+		club: Em.Route.extend({
+			route: '/club/:club_id',
+			serialize: function(router, context) {
+				return { club_id: context.get('clubId') };
+			},
+
+			connectOutlets: function (router, club) {
+				
+				router.get('applicationController').connectOutlet('body', 'club', club);
 			}
 		})
 	})
@@ -39716,13 +39742,13 @@ App.Athlete = DS.Model.extend({
 	}
 });
 
-App.Club = DS.Model.extend({
+/*App.Club = DS.Model.extend({
 	name: DS.attr('club'),
-	members: DS.attr('array')
+	members: DS.attr('array'),
 });
 App.Club.reopenClass({
 	url: 'clubs/%@/members'
-});
+});*/
 
 });
 
@@ -39774,8 +39800,56 @@ App.RidesView = App.BaseView.extend({
 
 });
 
-
 App.HomeBodyView = App.BaseView.extend({
 	templateName: 'ember-skeleton/~templates/homeBody'
 });
+
+App.ClubView = App.BaseView.extend({
+	templateName: 'ember-skeleton/~templates/club',
+	loadRides: function()
+	{
+		debugger;
+	}
+	
+});
+
+App.ShowMore = App.BaseView.extend({
+	click: function() {
+
+		var endDate = Date.create().beginningOfMonth().format("{yyyy}-{MM}-{dd}");
+		var clubId = this.get('content.clubId');
+		var queryUrl = 'select * from json where url="http://www.strava.com/api/v1/rides?clubId=%@&endDate=%@"'.fmt(clubId, endDate) ;
+		var self = this;
+		$.ajax({
+			url: 'http://query.yahooapis.com/v1/public/yql',
+			data: { format: 'json', q: queryUrl },
+			dataType: 'jsonp',
+			success: function (data) {
+				
+				if(!Ember.none(data.query.results.json))
+				{
+					$.each(data.query.results.json.rides, function (i, el) {
+						var queryUrl2 = 'select * from json where url="http://www.strava.com/api/v1/rides/%@"'.fmt(el.id);
+
+						
+						$.ajax({
+							url: 'http://query.yahooapis.com/v1/public/yql',
+							data: { format: 'json', q: queryUrl2 },
+							dataType: 'jsonp',
+							success: function (rideData) {
+								
+								data.query.results.json.rides[i] = rideData.query.results.ride;
+								var meber = $.grep(self.get('content.members'), function(e){ return e.id == rideData.query.results.ride.athlete.id; });
+								debugger//self.get('content.members')[]
+							}
+						})
+					});
+				}
+				self.content.set('rides', data.query.results.json.rides);
+			}
+		});
+		
+		return this.rides;		
+	}
+})
 });

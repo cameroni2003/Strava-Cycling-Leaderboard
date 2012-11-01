@@ -1,0 +1,33 @@
+<h2>Club: {{club.name}}</h2>
+
+
+<h2>Members</h2>
+<ul>
+	{{#each members}}
+	<li>{{name}}</li>
+	<!--<li>Total Miles: {{blah}}</li>-->
+	{{/each}}
+</ul>
+
+{{#view App.ShowMore contentBinding="this"}}
+show more
+{{/view}}
+
+<ul>
+	{{#each rides}}
+	<li>{{name}}</li>
+	{{/each}}
+</ul>
+<!-- <ul>
+	{{#each App.ridesController}}
+	{{#view App.RidesListView contentBinding="this" }}
+	<li>{{name}}</li>
+
+	<ul>
+		<li>Average Speed: {{averageSpeedMph}} mph</li>
+		<li>Distance: {{distanceInMiles}} miles</li>
+	</ul>
+
+	{{/view}}
+	{{/each}}
+</ul> -->
